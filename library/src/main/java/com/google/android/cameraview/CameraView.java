@@ -95,7 +95,7 @@ public class CameraView extends FrameLayout {
             return;
         }
         // Internal setup
-        final PreviewImpl preview = createPreviewImpl(context);
+        final PreviewImpl preview = createPreviewImpl(context, false);
         mCallbacks = new CallbackBridge();
         if (Build.VERSION.SDK_INT < 21) {
             mImpl = new Camera1(mCallbacks, preview);
@@ -105,18 +105,18 @@ public class CameraView extends FrameLayout {
             mImpl = new Camera2Api23(mCallbacks, preview, context);
         }
         // Attributes
-        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.CameraView, defStyleAttr,
-                R.style.Widget_CameraView);
-        mAdjustViewBounds = a.getBoolean(R.styleable.CameraView_android_adjustViewBounds, false);
-        setFacing(a.getInt(R.styleable.CameraView_facing, FACING_BACK));
-        String aspectRatio = a.getString(R.styleable.CameraView_aspectRatio);
+        TypedArray a = context.obtainStyledAttributes(attrs, com.google.android.cameraview.R.styleable.CameraView, defStyleAttr,
+                com.google.android.cameraview.R.style.Widget_CameraView);
+        mAdjustViewBounds = a.getBoolean(com.google.android.cameraview.R.styleable.CameraView_android_adjustViewBounds, false);
+        setFacing(a.getInt(com.google.android.cameraview.R.styleable.CameraView_facing, FACING_BACK));
+        String aspectRatio = a.getString(com.google.android.cameraview.R.styleable.CameraView_aspectRatio);
         if (aspectRatio != null) {
             setAspectRatio(AspectRatio.parse(aspectRatio));
         } else {
             setAspectRatio(Constants.DEFAULT_ASPECT_RATIO);
         }
-        setAutoFocus(a.getBoolean(R.styleable.CameraView_autoFocus, true));
-        setFlash(a.getInt(R.styleable.CameraView_flash, Constants.FLASH_AUTO));
+        setAutoFocus(a.getBoolean(com.google.android.cameraview.R.styleable.CameraView_autoFocus, true));
+        setFlash(a.getInt(com.google.android.cameraview.R.styleable.CameraView_flash, Constants.FLASH_AUTO));
         a.recycle();
         // Display orientation detector
         mDisplayOrientationDetector = new DisplayOrientationDetector(context) {
@@ -128,8 +128,10 @@ public class CameraView extends FrameLayout {
     }
 
     @NonNull
-    private PreviewImpl createPreviewImpl(Context context) {
+    private PreviewImpl createPreviewImpl(Context context, boolean isFallback) {
         PreviewImpl preview;
+        if(isFallback)
+            return new SurfaceViewPreview(context, this);
         if (Build.VERSION.SDK_INT < 14) {
             preview = new SurfaceViewPreview(context, this);
         } else {
@@ -247,7 +249,7 @@ public class CameraView extends FrameLayout {
             //store the state ,and restore this state after fall back o Camera1
             Parcelable state=onSaveInstanceState();
             // Camera2 uses legacy hardware layer; fall back to Camera1
-            mImpl = new Camera1(mCallbacks, createPreviewImpl(getContext()));
+            mImpl = new Camera1(mCallbacks, createPreviewImpl(getContext(), true));
             onRestoreInstanceState(state);
             mImpl.start();
         }
